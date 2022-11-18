@@ -151,7 +151,15 @@ class AsynchronousValueIterationAgent(ValueIterationAgent):
         Runs self.iterations iterations of async value iteration, only updating one state in each iteration
         updates self.values, does not return anything
         """
-        "*** YOUR CODE HERE ***"
+        for i in range(self.iterations):
+            states = self.mdp.getStates()
+            state = states[i%len(states)]
+            best = -100000000000
+            if len(self.mdp.getPossibleActions(state)) == 0: best = 0
+            for action in self.mdp.getPossibleActions(state):
+                s = self.computeQValueFromValues(state, action)
+                best = max(best, s)
+            self.values[state] = best
 
 class PrioritizedSweepingValueIterationAgent(AsynchronousValueIterationAgent):
     """
@@ -176,4 +184,44 @@ class PrioritizedSweepingValueIterationAgent(AsynchronousValueIterationAgent):
         updates self.values, does not return anything
         """
         "*** YOUR CODE HERE ***"
+        def findBestQValue(state):
+            best = -100000000000
+            if len(self.mdp.getPossibleActions(state)) == 0: best = 0
+            for action in self.mdp.getPossibleActions(state):
+                qval = self.computeQValueFromValues(state, action)
+                best = max(best, qval)
+            return best
+
+        preddict = dict()
+        for state in self.mdp.getStates():
+            predecessors = set()
+            for startstate in self.mdp.getStates():
+                for action in self.mdp.getPossibleActions(startstate):
+                    for (endstate, T) in self.mdp.getTransitionStatesAndProbs(startstate, action):
+                        if state == endstate:
+                            predecessors.add(startstate)
+            preddict[state] = predecessors
+
+        q = util.PriorityQueue()
+
+        for s in self.mdp.getStates():
+            diff = abs(self.values[s] - findBestQValue(s))
+
+            q.push(s, -diff)
+            
+        for i in range(self.iterations):
+            if q.isEmpty(): break
+            s = q.pop()
+
+            self.values[s] = findBestQValue(s)
+
+            for p in preddict[s]:
+                diff = abs(self.values[p] - findBestQValue(p))
+                if diff > self.theta:
+                    q.push(p, -diff)
+
+
+
+                
+
 
