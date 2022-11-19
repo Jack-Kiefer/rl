@@ -201,15 +201,16 @@ class QLearningAgentCountExploration(QLearningAgent):
           return: action, representing the action taken according to the visit count based exploration policy
         """
         actions = []
-        best_q = -math.inf
+        best_f = -math.inf
         for naction in self.getLegalActions(state):
           new_q = self.getQValue(state, naction)
-          if new_q > best_q:
+          f_val = self.get_f_vals(new_q, self.visitCount[(state, naction)])
+          if f_val > best_f:
             actions = [naction]
-            best_q = new_q
-          elif new_q == best_q:
+            best_f = f_val
+          elif f_val == best_f:
             actions.append(naction)
-        print(actions)
+        print(state, actions)
         if len(actions) > 0:
           return random.choice(actions)
         return None
